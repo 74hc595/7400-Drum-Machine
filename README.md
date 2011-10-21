@@ -56,3 +56,24 @@ Oscillators and counters
 The drum machine has two main counters: one for multiplexing the LEDs, and one for advancing through each step during playback. A TLC556 generates clock signals for each counter. The LED multiplexing clock (`LEDCLK`) has a fixed rate in the kilohertz range. The frequency of step clock (`STEPCLK`) is adjustable via the tempo knob.
 
 The counters are two halves of a 4520 synchronous counter. The LED multiplexing counter (referred to as `L0-L3` or `Ln`) is advancing constantly. The step counter (`S0-S3` or `Sn`) updates once every step, and only during playback. To ensure that the first beat isn't skipped when playback starts (because the first clock pulse would advance the counter from 0 to 1 before step 0 is triggered) an RC circuit is used on the clock pin to delay the falling clock edge by a few hundred nanoseconds.
+
+Memory
+======
+
+The pattern is stored in a 74LS189 static RAM chip (once again, very expensive). It stores sixteen words of 4 bits each. How convenient! 16 words: 16 steps. 4 bits: 4 channels. 
+
+The 74LS189's address input could come from three sources: the LED multiplex counter `Ln`, the step counter `Sn`. or the keyboard encoder (`Kn`) when a step key is pressed. So two 74HC153 dual 4-bit multiplexers are used to multiplex these inputs into the '189's address lines.
+
+On a falling edge of `STEPCLK`, during playback, two pulses are generated with a 74HC123 dual monostable. The first pulse, `/STEP1`, selects `Sn` as the multiplexer's input, to ensure the address lines are set up. A few hundred nanoseconds later, another pulse, `/STEP2`, goes low, and the sound generators' triggers are activated (if the corresponding bit for that channel is 1. Note the '189's outputs are inverted, so a 1 bit stored results in a negative-going output pulse.)
+
+The 2-bit channel value from the rotary switch is used as an input to a 4052 dual analog multiplexer/demultiplexer. Why use an analog part? So I can use one half as a multiplexer and the other as a demultiplexer! The multiplexer half selects which of the 4 data bits to display on the LEDs; this line is connected to an enable input on the 74HC154 LED decoder. (through an XOR gate that allows it to be toggled.)
+
+Writing to memory is interesting. Pressing a step button toggles the appropriate bit. So we need a circuit that conditionally toggles one bit in the 74LS189. Unlike most SRAM chips, the '189 has separate data inputs and outputs, so we feed the outputs back to the inputs, sticking a 74HC86 quad XOR gate in the middle so we can conditionally toggle bits. (Recall that an XOR gate can be used as a controlled inverter.) The outputs of the '189 are already inverted, so when a step button is pressed, the three bits for the unselected channels should be inverted *again*, and the bit for the selected channel should be left alone, so its inverse is written to memory.
+
+This is where the demultiplexer half of the 4052 comes in. Normally, pull-up resistors are connected to the 'B' inputs of the XOR gates, so the output is the inverse of the 'A' input. The demultiplexer pulls the XOR control input for the selected channel to ground, allowing the bit for the selected channel to pass through inverted.
+
+When a step button is pressed, another 74HC123 dual monostable generates two pulses. The first pulse, `/PRESS`, sets up the 74HC153 multiplexers so the encoded key input is used to select the address. The second pulse, `/WR`, occurs a few hundred nanoseconds later, (after the address and data lines have stabilized) and pulls the memory write enable input `/WE` low.
+
+Note that the feedback/bit-toggling scheme appears to work because the 74LS189 has internal buffers on the input and output lines. If it didn't, the instant feedback would cause the output bits would oscillate wildly.
+
+A 74HC08 quad AND gate is also stuck in there to allow memory to be cleared. Normally, the `/CLEAR` signal is high, allowing the data inputs to pass through. When the clear button is pressed, `/CLEAR` goes low, zeroing all four data bits, and the write-enable pin `/WE` is pulled low. Since the address inputs are constantly being updated by the LED multiplexing counter at a very fast rate, all 16 words are cleared in a matter of milliseconds while the button is depressed.
