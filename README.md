@@ -36,3 +36,17 @@ Additionally, the 4-bit output of the envelope counter is passed through another
 The sound effect is activated when the TRIGGER input is pulled to ground. Each sound board also has a manual trigger input connected to a button on the front panel. Since the 74HC191 counters' reset inputs are level-sensitive, not edge-sensitive, an ac-coupling capacitor and pull-up resistors are used to generate a quick pulse when TRIGGER is pulled low. A diode provides protection from the voltage spike generated when TRIGGER goes high again, but in practice I've found things to be OK without it.
 
 Phew, that was quite a lot! And we're just getting started!
+
+Interface
+=========
+
+The front panel was designed in Inkscape, printed on a laser printer and glued to a piece of black foam core. (Who needs Ponoko? :p) At the top are the controls for the four sound generators. At the bottom are 16 switches and LEDs, one for each step, a rotary switch that selects the channel to edit, a master clear button, a start/stop button, and a potentiometer to control the tempo.
+
+The 16 step keys are connected in a matrix configuration to a 74C922 keypad encoder. This chip is rare and *expensive* but it's awesome! It scans a 4x4 switch matrix, performs debouncing, and provides a 4-bit output. Sweet!
+
+A 74HC154 is used to multiplex the LEDs. Only one LED needs to be lit at a time, so a single 33 ohm resistor is used for all the LEDs. During playback, the LED for the current step flickers. This is accomplished by using a 74HC85 4-bit comparator to compare the current step number to the multiplexer count. If they're equal, that LED's value is toggled using an XOR gate. (74HC86)
+
+A 555 is used as a push-on/push-off circuit for the start/stop button. An RC circuit ensures it always starts off.
+
+A 2-bit output is derived from the channel select rotary switch using some clever wiring. It's a 3-pole, 4-position switch, and two of the poles are used: one for bit 1 and one for bit 0. For each pole, the appropriate contacts are grounded; add pull-up resistors and you've got a 2-bit encoder!
+
