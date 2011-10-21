@@ -77,3 +77,10 @@ When a step button is pressed, another 74HC123 dual monostable generates two pul
 Note that the feedback/bit-toggling scheme appears to work because the 74LS189 has internal buffers on the input and output lines. If it didn't, the instant feedback would cause the output bits would oscillate wildly.
 
 A 74HC08 quad AND gate is also stuck in there to allow memory to be cleared. Normally, the `/CLEAR` signal is high, allowing the data inputs to pass through. When the clear button is pressed, `/CLEAR` goes low, zeroing all four data bits, and the write-enable pin `/WE` is pulled low. Since the address inputs are constantly being updated by the LED multiplexing counter at a very fast rate, all 16 words are cleared in a matter of milliseconds while the button is depressed.
+
+Rather than sacrifice space for another chip, I used a diode AND gate to connect both the `/WR` and `/CLEAR` lines to the '189's `/WE` input.
+
+Triggers
+========
+As described earlier, the `/STEP2` pulse activates the trigger outputs for each sound generator. This is accomplished with a 74HC32 quad OR gate. When `/STEP2` is high, the outputs are all held high. When `/STEP2` pulses low, channels with 1 bits programmed go low as well. Since the trigger inputs on the sound generators are normally pulled up, diodes are placed on the trigger outputs so they can only sink current, not source it. This allows wire-AND connections with the manual trigger buttons.
+
