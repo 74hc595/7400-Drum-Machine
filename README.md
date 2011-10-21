@@ -36,7 +36,9 @@ Each op amp in the LM324 is set up as a differential (subtracting) amplifier. Wh
 
 Additionally, the 4-bit output of the envelope counter is passed through another binary weighted DAC. When pitch bend is on, this value is connected to the control pin of the audio half of the 556. Higher voltages on the control pin result in lower output frequencies, so the positive-going signal from the '191 causes the oscillator's pitch to decay.
 
-The sound effect is activated when the TRIGGER input is pulled to ground. Each sound board also has a manual trigger input connected to a button on the front panel. Since the 74HC191 counters' reset inputs are level-sensitive, not edge-sensitive, an ac-coupling capacitor and pull-up resistors are used to generate a quick pulse when TRIGGER is pulled low. A diode provides protection from the voltage spike generated when TRIGGER goes high again, but in practice I've found things to be OK without it.
+The sound effect is activated when the `/TRIGGER` input is pulled to ground. Each sound board also has a manual trigger input connected to a button on the front panel. Since the 74HC191 counters' reset inputs are level-sensitive, not edge-sensitive, an ac-coupling capacitor and pull-up resistors are used to generate a quick pulse when `/TRIGGER` is pulled low. A diode provides protection from the voltage spike generated when `/TRIGGER` goes high again, but in practice I've found things to be OK without it.
+
+The schematic makes a reference to a "tremolo" potentiometer, but I decided to omit it from the final design. Basically, by mucking with the resistor values in the envelope DAC, you could get interesting tremolo effects. For the final circuit, I just connect the two `TREMOLO` lines to a 22k resistor.
 
 Phew, that was quite a lot! And we're just getting started!
 
